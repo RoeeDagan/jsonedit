@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit JSON on GitHub</title>
+</head>
+<body>
+
+<h1>Edit JSON File</h1>
+<textarea id="jsonInput" rows="20" cols="80" placeholder="JSON content here"></textarea>
+<br>
+<button id="saveBtn">Save Changes</button>
+
+<script>
+    // GitHub OAuth Token (user must authenticate, this is just for demonstration)
+    const githubToken = 'YOUR_GITHUB_TOKEN';
+
+    // Repository details
+    const owner = 'YOUR_GITHUB_USERNAME';
+    const repo = 'YOUR_GITHUB_REPOSITORY';
+    const filePath = 'path/to/your/file.json';
+
+    // Fetch JSON content from GitHub
+    const loadJSON = async () => {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+            headers: {
+                'Authorization': `token ${githubToken}`
+            }
+        });
+        const fileData = await response.json();
+        const fileContent = atob(fileData.content); // Decode Base64
+        document.getElementById('jsonInput').value = fileContent;
+    };
+
+    // Save edited JSON back to GitHub
+    const saveJSON = async () => {
+        try {
+            const jsonData = document.getElementById('jsonInput').value;
+            const encodedData = btoa(jsonData); // Encode to Base64
+
+            const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'Updated JSON file',
+                    content: encodedData,
+                    sha: 'FILE_SHA' // You need to fetch the current SHA of the file before updating
+                })
+            });
+
+            if (response.ok) {
+                alert('File updated successfully!');
+            } else {
+                alert('Error updating file.');
+            }
+        } catch (error) {
+            alert('Error: Invalid JSON format.');
+        }
+    };
+
+    document.getElementById('saveBtn').addEventListener('click', saveJSON);
+
+    // Load the JSON file on page load
+    window.onload = loadJSON;
+</script>
+
+</body>
+</html>
